@@ -1,19 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
+import { stripeConfig } from '../config/stripe.config';
+import type { ConfigType } from '@nestjs/config';
 import Stripe from 'stripe';
 
 @Injectable()
 export class StripeService {
   private readonly stripe: Stripe;
 
-  constructor(private readonly config: ConfigService) {
-    const secretKey = this.config.get<string>('STRIPE_SECRET_KEY');
-    if (!secretKey) {
-      throw new Error('Missing STRIPE_SECRET_KEY in .env');
-    }
-
-    this.stripe = new Stripe(secretKey, {
-      apiVersion: '2025-12-15.clover',
+  constructor(
+    @Inject(stripeConfig.KEY)
+    private readonly config: ConfigType<typeof stripeConfig>,
+  ) {
+    this.stripe = new Stripe(this.config.secretKey, {
+      ...(this.config.apiVersion ? { apiVersion: this.config.apiVersion } : {}),
     });
   }
 
