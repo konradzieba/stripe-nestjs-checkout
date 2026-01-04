@@ -14,6 +14,10 @@ const stripeConfigSchema = z.object({
     )
     .optional(),
   appUrl: z.url().optional(),
+  allowedPriceIds: (process.env.STRIPE_ALLOWED_PRICE_IDS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
 });
 
 export interface StripeConfig {
@@ -29,6 +33,10 @@ export const stripeConfig = registerAs('stripe', (): StripeConfig => {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     apiVersion: process.env.STRIPE_API_VERSION,
     appUrl: process.env.APP_URL,
+    allowedPriceIds: (process.env.STRIPE_ALLOWED_PRICE_IDS ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   });
 
   return {

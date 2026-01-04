@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { stripeConfig } from '../config/stripe.config';
 import type { ConfigType } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -30,6 +30,9 @@ export class StripeService {
   }
 
   async createCheckoutSession(params: CreateCheckoutSessionParam) {
+    if (!this.config.allowedPriceIds.includes(params.priceId)) {
+      throw new BadRequestException('Unsupported priceId');
+    }
     const session = await this.client.checkout.sessions.create({
       mode: 'payment',
       line_items: [{ price: params.priceId, quantity: params.quantity }],

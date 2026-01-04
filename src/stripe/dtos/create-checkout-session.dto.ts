@@ -1,5 +1,6 @@
 import { IsEmail, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateCheckoutSessionDto {
   @ApiProperty({
@@ -17,6 +18,7 @@ export class CreateCheckoutSessionDto {
     default: 1,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   quantity?: number;

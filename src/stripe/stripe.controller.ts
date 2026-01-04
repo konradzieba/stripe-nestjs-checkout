@@ -15,6 +15,7 @@ import { CreateCheckoutSessionDto } from './dtos/create-checkout-session.dto';
 import { StripeApi } from './stripe.swagger';
 import Stripe from 'stripe';
 import type { Request } from 'express';
+import { OrdersService } from 'src/orders/orders.service';
 
 type RawBodyRequest<T> = T & { rawBody?: Buffer };
 
@@ -26,16 +27,17 @@ export class StripeController {
   constructor(
     private readonly stripeService: StripeService,
     private readonly logger: Logger,
+    private readonly ordersService: OrdersService,
   ) {}
 
-  @Post('ping')
+  @Post('dev/ping')
   @StripeApi.Ping()
   ping(@Body() dto: PingDto) {
     this.logger.log(`Ping called for email=${dto.email}`, this.logContext);
     return { ok: true, email: dto.email };
   }
 
-  @Post('checkout-session-dry')
+  @Post('dev/checkout-session-dry')
   @StripeApi.CheckoutSessionDry()
   checkoutSessionDry(@Body() dto: CreateCheckoutSessionDto) {
     this.logger.log(
@@ -62,12 +64,20 @@ export class StripeController {
       `Creating checkout session price=${dto.priceId}, qty=${quantity}, email=${dto.customerEmail ?? 'n/a'}`,
       this.logContext,
     );
+
+    const order = await this.ordersService.createPending({
+      priceId: dto.priceId,
+      quantity,
+      customerEmail: dto.customerEmail,
+    });
+
     const session = await this.stripeService.createCheckoutSession({
       priceId: dto.priceId,
       quantity,
       customerEmail: dto.customerEmail,
       metadata: {
         source: 'nestjs',
+        orderId: order.id,
       },
     });
 
@@ -76,6 +86,8 @@ export class StripeController {
       this.logContext,
     );
 
+    await this.ordersService.attachStripeSession(order.id, session.id);
+
     return {
       id: session.id,
       url: session.url,
@@ -83,9 +95,9 @@ export class StripeController {
   }
 
   @Post('webhook')
-  @HttpCode(200) // standard for webhooks
+  @HttpCode(200)
   @StripeApi.Webhook()
-  webhook(
+  async webhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature?: string,
   ) {
@@ -116,14 +128,40 @@ export class StripeController {
     }
 
     this.logger.log(`Webhook received type=${event.type}`, this.logContext);
+
+    if (await this.ordersService.existsByStripeEventId(event.id)) {
+      this.logger.log(`Webhook duplicate eventId=${event.id}`, this.logContext);
+      return { received: true };
+    }
+
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object; // Stripe.Checkout.Session
+        const session = event.data.object;
+
+        const orderId = session.metadata?.orderId;
+        if (!orderId) {
+          this.logger.warn(
+            `Webhook checkout.session.completed missing metadata.orderId sessionId=${session.id}`,
+            this.logContext,
+          );
+          return { received: true };
+        }
+
+        await this.ordersService.setStripeEventId(orderId, event.id);
+
+        const paymentIntentId =
+          typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : null;
+
+        await this.ordersService.markPaidByOrderId(orderId, paymentIntentId);
+
         this.logger.log(
-          `Checkout session completed id=${session.id}`,
+          `Order paid orderId=${orderId} sessionId=${session.id} eventId=${event.id}`,
           this.logContext,
         );
-        return { received: true, type: event.type, sessionId: session.id };
+
+        return { received: true };
       }
       default:
         this.logger.log(
