@@ -13,7 +13,7 @@ const stripeConfigSchema = z.object({
       'STRIPE_API_VERSION must be YYYY-MM-DD or YYYY-MM-DD.<release>',
     )
     .optional(),
-  appUrl: z.url().optional(),
+  appUrl: z.url(),
   allowedPriceIdsRaw: z.string().min(1, 'STRIPE_ALLOWED_PRICE_IDS is required'),
 });
 
@@ -22,7 +22,7 @@ export interface StripeConfig {
   webhookSecret: string;
   allowedPriceIds: string[];
   apiVersion?: Stripe.LatestApiVersion;
-  appUrl?: string;
+  appUrl: string;
 }
 
 export const stripeConfig = registerAs('stripe', (): StripeConfig => {

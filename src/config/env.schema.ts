@@ -8,11 +8,11 @@ export const envSchema = z
 
     // Stripe
     STRIPE_SECRET_KEY: z.string().min(1),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
     STRIPE_API_VERSION: z.string().min(1).optional(),
-    STRIPE_ALLOWED_PRICE_IDS: z.string().min(1).optional(),
+    STRIPE_ALLOWED_PRICE_IDS: z.string().min(1),
 
-    APP_URL: z.url().optional(),
+    APP_URL: z.url(),
 
     // Database (PostgreSQL)
     DATABASE_URL: z.string().min(1).optional(),
