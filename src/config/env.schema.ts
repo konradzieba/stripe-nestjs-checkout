@@ -11,7 +11,7 @@ export const envSchema = z
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     STRIPE_API_VERSION: z.string().min(1).optional(),
 
-    APP_URL: z.string().url().optional(),
+    APP_URL: z.url().optional(),
 
     // Database (PostgreSQL)
     DATABASE_URL: z.string().min(1).optional(),

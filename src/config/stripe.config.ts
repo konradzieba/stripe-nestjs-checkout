@@ -5,7 +5,7 @@ import { parseStripeApiVersion } from './stripe-api-version';
 
 const stripeConfigSchema = z.object({
   secretKey: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
-  webhookSecret: z.string().min(1).optional(),
+  webhookSecret: z.string().min(1, 'STRIPE_WEBHOOK_SECRET is required'),
   apiVersion: z
     .string()
     .regex(
@@ -18,7 +18,7 @@ const stripeConfigSchema = z.object({
 
 export interface StripeConfig {
   secretKey: string;
-  webhookSecret?: string;
+  webhookSecret: string;
   apiVersion?: Stripe.LatestApiVersion;
   appUrl?: string;
 }
