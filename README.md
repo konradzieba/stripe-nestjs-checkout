@@ -1,98 +1,99 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Stripe Nest Tutorial
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS + Stripe Checkout + webhooks + Postgres (TypeORM). Includes endpoints to create Checkout sessions, handle webhooks, and a simple orders model.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### Stack
 
-## Description
+- NestJS 11, TypeORM (Postgres)
+- Stripe SDK
+- Zod + class-validator
+- Jest / Supertest
+- Husky (pre-commit: format + lint, pre-push: lint + test)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Requirements
 
-## Project setup
+- Node.js 18+
+- pnpm
+- Postgres
+- Stripe keys (secret key, webhook secret, price IDs)
 
-```bash
-$ pnpm install
+## Environment
+
+Example `.env`:
+
+```env
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_ALLOWED_PRICE_IDS=price_123,price_456
+APP_URL=http://localhost:2345
+
+DATABASE_URL=postgres://user:pass@localhost:5432/stripe_db
+DB_SYNC=false
 ```
 
-## Compile and run the project
+Key vars: `APP_URL` (success/cancel redirects), `STRIPE_WEBHOOK_SECRET`, `STRIPE_ALLOWED_PRICE_IDS`, `DB_SYNC` (false in prod, true only locally if you want synchronize instead of migrations).
+
+## Install
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm install
 ```
 
-## Run tests
+## Run
 
 ```bash
-# unit tests
-$ pnpm run test
+# dev (watch)
 
-# e2e tests
-$ pnpm run test:e2e
 
-# test coverage
-$ pnpm run test:cov
+# prod build + run
+pnpm build && pnpm start:prod
 ```
 
-## Deployment
+Swagger: http://localhost:2345/api
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Migrations (TypeORM)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- CLI config: `src/typeorm.config.ts`
+- Generate diff (use a clean DB, DB_SYNC=false):
+  ```bash
+  pnpm migration:generate src/migrations/Initial
+  ```
+- Empty migration for manual edits:
+  ```bash
+  pnpm migration:create src/migrations/Manual
+  ```
+- Run / revert:
+  ```bash
+  pnpm migration:run
+  pnpm migration:revert
+  ```
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+## Scripts
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- `pnpm format` – Prettier
+- `pnpm lint` – ESLint
+- `pnpm test` – unit tests
+- `pnpm test:e2e` – e2e tests
+- `pnpm migration:*` – migrations (generate/run/revert/create)
 
-## Resources
+## Git hooks (Husky)
 
-Check out a few resources that may come in handy when working with NestJS:
+- pre-commit: `pnpm format` -> `pnpm lint`
+- pre-push: `pnpm lint` -> `pnpm test`
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Endpoints
 
-## Support
+- POST `/stripe/checkout-session` – creates a Stripe Checkout session (requires priceId, optional quantity, customerEmail). Returns `id` and redirect `url`.
+- POST `/stripe/webhook` – receives Stripe events (requires raw body and `stripe-signature`). Idempotent via `stripeEventId`.
+- GET `/stripe/health` – Stripe account ping.
+- GET `/success` / `/cancel` – payment redirect stubs (JSON).
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Database
 
-## Stay in touch
+`Order` model stores status (PENDING/PAID/FAILED), priceId, quantity, email, and Stripe identifiers (session, payment_intent, event). A conditional unique index on `stripeEventId` keeps webhooks idempotent.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Dev notes
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Raw body is enabled only on `/stripe/webhook`.
+- In production keep `DB_SYNC=false` and run migrations in your pipeline before the app starts.
+  Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
