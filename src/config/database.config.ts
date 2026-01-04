@@ -9,6 +9,7 @@ const databaseConfigSchema = z
     user: z.string().min(1).optional(),
     password: z.string().min(1).optional(),
     name: z.string().min(1).optional(),
+    sync: z.boolean().default(false),
   })
   .superRefine((db, ctx) => {
     const hasUrl = Boolean(db.url);
@@ -39,6 +40,7 @@ export const databaseConfig = registerAs('database', (): DatabaseConfig => {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     name: process.env.DB_NAME,
+    sync: process.env.DB_SYNC === 'true',
   };
 
   return databaseConfigSchema.parse(cfg);

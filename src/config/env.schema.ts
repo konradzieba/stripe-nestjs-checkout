@@ -22,6 +22,7 @@ export const envSchema = z
     DB_USER: z.string().min(1).optional(),
     DB_PASSWORD: z.string().min(1).optional(),
     DB_NAME: z.string().min(1).optional(),
+    DB_SYNC: z.coerce.boolean().default(false),
   })
   .superRefine((env, ctx) => {
     const hasUrl = Boolean(env.DATABASE_URL);

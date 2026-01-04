@@ -36,7 +36,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
             type: 'postgres' as const,
             url: db.url,
             autoLoadEntities: true,
-            synchronize: true, // only for dev
+            synchronize: db.sync,
+            migrationsRun: !db.sync,
+            migrations: ['dist/migrations/*.js'],
           };
         }
 
@@ -49,7 +51,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
           password: db.password,
           database: db.name,
           autoLoadEntities: true,
-          synchronize: true, // only for dev
+          synchronize: db.sync,
+          migrationsRun: !db.sync,
+          migrations: ['dist/migrations/*.js'],
         };
       },
     }),
