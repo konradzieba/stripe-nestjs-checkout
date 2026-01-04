@@ -10,8 +10,8 @@ export class AppController {
   ) {}
 
   @Get()
-  getHello(): Record<string, string> {
-    this.logger.log(`Handling getHello request`, this.logContext);
+  healthCheck(): Record<string, string> {
+    this.logger.log(`Handling healthCheck request`, this.logContext);
     return this.appService.healthCheck();
   }
 

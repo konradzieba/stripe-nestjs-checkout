@@ -17,7 +17,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return healthCheck payload', () => {
-      const res = appController.getHello();
+      const res = appController.healthCheck();
       expect(res).toEqual({
         message: 'ok',
         timestamp: expect.any(String) as unknown,
