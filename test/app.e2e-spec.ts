@@ -6,9 +6,10 @@ import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let moduleFixture: TestingModule;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+  beforeAll(async () => {
+    moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
@@ -16,10 +17,20 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterAll(async () => {
+    await app.close();
+    await moduleFixture.close();
+  });
+
   it('/ (GET)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect(res.body).toEqual({
+          message: 'ok',
+          timestamp: expect.any(String) as unknown,
+        });
+      });
   });
 });
