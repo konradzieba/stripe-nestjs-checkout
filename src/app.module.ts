@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StripeModule } from './stripe/stripe.module';
@@ -8,7 +8,6 @@ import z from 'zod';
 import { stripeConfig } from './config/stripe.config';
 import { databaseConfig } from './config/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -54,9 +53,8 @@ import { OrdersModule } from './orders/orders.module';
         };
       },
     }),
-    OrdersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, Logger],
 })
 export class AppModule {}
