@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
 import { orderStatuses } from './order-status';
+import { stripeConfig } from '../stripe/../config/stripe.config';
+import type { StripeConfig } from '../stripe/../config/stripe.config';
 
 @Injectable()
 export class OrdersService {
   constructor(
+    @Inject(stripeConfig.KEY)
+    private readonly config: StripeConfig,
     @InjectRepository(Order) private readonly repo: Repository<Order>,
   ) {}
 
@@ -15,6 +19,9 @@ export class OrdersService {
     quantity: number;
     customerEmail?: string;
   }) {
+    if (!this.config.allowedPriceIds.includes(input.priceId)) {
+      throw new BadRequestException('Unsupported priceId');
+    }
     const order = this.repo.create({
       status: orderStatuses.PENDING,
       priceId: input.priceId,
@@ -39,6 +46,10 @@ export class OrdersService {
       { id: orderId },
       { status: orderStatuses.PAID, stripePaymentIntentId },
     );
+  }
+
+  async markFailed(orderId: string) {
+    await this.repo.update({ id: orderId }, { status: orderStatuses.FAILED });
   }
 
   async setStripeEventId(orderId: string, eventId: string) {

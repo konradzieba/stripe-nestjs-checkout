@@ -15,7 +15,7 @@ import { CreateCheckoutSessionDto } from './dtos/create-checkout-session.dto';
 import { StripeApi } from './stripe.swagger';
 import Stripe from 'stripe';
 import type { Request } from 'express';
-import { OrdersService } from 'src/orders/orders.service';
+import { OrdersService } from '../orders/orders.service';
 
 type RawBodyRequest<T> = T & { rawBody?: Buffer };
 
@@ -71,27 +71,36 @@ export class StripeController {
       customerEmail: dto.customerEmail,
     });
 
-    const session = await this.stripeService.createCheckoutSession({
-      priceId: dto.priceId,
-      quantity,
-      customerEmail: dto.customerEmail,
-      metadata: {
-        source: 'nestjs',
-        orderId: order.id,
-      },
-    });
+    try {
+      const session = await this.stripeService.createCheckoutSession({
+        priceId: dto.priceId,
+        quantity,
+        customerEmail: dto.customerEmail,
+        metadata: {
+          source: 'nestjs',
+          orderId: order.id,
+        },
+      });
 
-    this.logger.log(
-      `Checkout session created id=${session.id}`,
-      this.logContext,
-    );
+      this.logger.log(
+        `Checkout session created id=${session.id}`,
+        this.logContext,
+      );
 
-    await this.ordersService.attachStripeSession(order.id, session.id);
+      await this.ordersService.attachStripeSession(order.id, session.id);
 
-    return {
-      id: session.id,
-      url: session.url,
-    };
+      return {
+        id: session.id,
+        url: session.url,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Checkout session failed for orderId=${order.id}: ${err instanceof Error ? err.message : err}`,
+        this.logContext,
+      );
+      await this.ordersService.markFailed(order.id);
+      throw err;
+    }
   }
 
   @Post('webhook')
