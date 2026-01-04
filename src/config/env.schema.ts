@@ -10,6 +10,7 @@ export const envSchema = z
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     STRIPE_API_VERSION: z.string().min(1).optional(),
+    STRIPE_ALLOWED_PRICE_IDS: z.string().min(1).optional(),
 
     APP_URL: z.url().optional(),
 

@@ -14,15 +14,13 @@ const stripeConfigSchema = z.object({
     )
     .optional(),
   appUrl: z.url().optional(),
-  allowedPriceIds: (process.env.STRIPE_ALLOWED_PRICE_IDS ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean),
+  allowedPriceIdsRaw: z.string().min(1, 'STRIPE_ALLOWED_PRICE_IDS is required'),
 });
 
 export interface StripeConfig {
   secretKey: string;
   webhookSecret: string;
+  allowedPriceIds: string[];
   apiVersion?: Stripe.LatestApiVersion;
   appUrl?: string;
 }
@@ -33,14 +31,25 @@ export const stripeConfig = registerAs('stripe', (): StripeConfig => {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     apiVersion: process.env.STRIPE_API_VERSION,
     appUrl: process.env.APP_URL,
-    allowedPriceIds: (process.env.STRIPE_ALLOWED_PRICE_IDS ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean),
+    allowedPriceIdsRaw: process.env.STRIPE_ALLOWED_PRICE_IDS || '',
   });
 
+  const allowedPriceIds = parsed.allowedPriceIdsRaw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (allowedPriceIds.length === 0) {
+    throw new Error(
+      'STRIPE_ALLOWED_PRICE_IDS must contain at least one price id',
+    );
+  }
+
   return {
-    ...parsed,
+    secretKey: parsed.secretKey,
+    webhookSecret: parsed.webhookSecret,
+    appUrl: parsed.appUrl,
+    allowedPriceIds,
     apiVersion: parseStripeApiVersion(parsed.apiVersion),
   };
 });
