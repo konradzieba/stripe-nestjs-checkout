@@ -27,7 +27,10 @@ export class Order {
   @Column({ type: 'text', nullable: true })
   stripePaymentIntentId!: string | null;
 
-  @Index({ unique: true })
+  @Index('uniq_order_stripe_event_id', {
+    unique: true,
+    where: '"stripeEventId" IS NOT NULL',
+  })
   @Column({ type: 'text', nullable: true })
   stripeEventId!: string | null;
 
