@@ -2,7 +2,9 @@ import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConsumes,
   ApiExtraModels,
+  ApiHeader,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -11,6 +13,7 @@ import {
 import { PingDto } from './dtos/ping.dto';
 import { CreateCheckoutSessionDto } from './dtos/create-checkout-session.dto';
 import { CheckoutSessionResponseDto } from './dtos/checkout-session-response.dto';
+import { StripeWebhookResponseDto } from './dtos/webhook.response.dto';
 
 class ErrorResponseDto {
   statusCode!: number;
@@ -108,6 +111,34 @@ export const StripeApi = {
             message: "No such price: 'price_XXX'",
             error: 'Bad Request',
           },
+        },
+      }),
+    ),
+
+  Webhook: () =>
+    applyDecorators(
+      ApiOperation({
+        summary: 'Stripe webhook endpoint',
+        description:
+          'Receives Stripe events. Requires raw body and Stripe-Signature header for verification.',
+      }),
+      ApiConsumes('application/json'),
+      ApiHeader({
+        name: 'stripe-signature',
+        required: true,
+        description: 'Stripe webhook signature header',
+      }),
+      ApiBody({
+        schema: {
+          type: 'object',
+          additionalProperties: true,
+          example: { id: 'evt_123', type: 'checkout.session.completed' },
+        },
+      }),
+      ApiOkResponse({
+        type: StripeWebhookResponseDto,
+        schema: {
+          example: { received: true, type: 'checkout.session.completed' },
         },
       }),
     ),

@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
   Logger,
   Post,
   Req,
@@ -82,6 +83,8 @@ export class StripeController {
   }
 
   @Post('webhook')
+  @HttpCode(200) // standard for webhooks
+  @StripeApi.Webhook()
   webhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature?: string,
@@ -115,7 +118,7 @@ export class StripeController {
     this.logger.log(`Webhook received type=${event.type}`, this.logContext);
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object;
+        const session = event.data.object; // Stripe.Checkout.Session
         this.logger.log(
           `Checkout session completed id=${session.id}`,
           this.logContext,
