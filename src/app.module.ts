@@ -5,11 +5,13 @@ import { StripeModule } from './stripe/stripe.module';
 import { ConfigModule } from '@nestjs/config';
 import { envSchema } from './config/env.schema';
 import z from 'zod';
+import { stripeConfig } from './config/stripe.config';
 
 @Module({
   imports: [
     StripeModule,
     ConfigModule.forRoot({
+      load: [stripeConfig],
       isGlobal: true,
       validate: (config) => {
         const parsed = envSchema.safeParse(config);
