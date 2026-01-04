@@ -1,10 +1,15 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
 import { orderStatuses } from './order-status';
-import { stripeConfig } from '../stripe/../config/stripe.config';
-import type { StripeConfig } from '../stripe/../config/stripe.config';
+import { stripeConfig } from '../config/stripe.config';
+import type { StripeConfig } from '../config/stripe.config';
 
 @Injectable()
 export class OrdersService {
@@ -35,25 +40,43 @@ export class OrdersService {
   }
 
   async attachStripeSession(orderId: string, stripeSessionId: string) {
-    await this.repo.update({ id: orderId }, { stripeSessionId });
+    const res = await this.repo.update({ id: orderId }, { stripeSessionId });
+    if (res.affected === 0) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
   }
 
   async markPaidByOrderId(
     orderId: string,
     stripePaymentIntentId: string | null,
   ) {
-    await this.repo.update(
+    const res = await this.repo.update(
       { id: orderId },
       { status: orderStatuses.PAID, stripePaymentIntentId },
     );
+    if (res.affected === 0) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
   }
 
   async markFailed(orderId: string) {
-    await this.repo.update({ id: orderId }, { status: orderStatuses.FAILED });
+    const res = await this.repo.update(
+      { id: orderId },
+      { status: orderStatuses.FAILED },
+    );
+    if (res.affected === 0) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
   }
 
   async setStripeEventId(orderId: string, eventId: string) {
-    await this.repo.update({ id: orderId }, { stripeEventId: eventId });
+    const res = await this.repo.update(
+      { id: orderId },
+      { stripeEventId: eventId },
+    );
+    if (res.affected === 0) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
   }
 
   async findById(orderId: string) {
